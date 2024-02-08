@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  idem-certbot:
+    image: "gitlab.dir.garr.it:4567/idem/idem-certbot:{{ certbot_version }}"
+    container_name: "idem-certbot"
+    hostname: idem-certbot
+    env_file:
+      - ".idemcertbot.env"
+    volumes:
+      - /opt/idem-certbot/:/etc/letsencrypt
+

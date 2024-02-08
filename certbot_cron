@@ -1,0 +1,4 @@
+# crontab entries for the certbot package
+
+0 */6 * * * root certbot renew -q 2>&1
+

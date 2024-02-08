@@ -1,0 +1,50 @@
+- name: Deployment Certbot
+  hosts: remote_hosts
+  become: true
+  become_method: sudo
+  remote_user: debian
+  tasks:
+    - name: Create Certbot folder
+      ansible.builtin.file:
+        path: "/opt/certbot-deploy"
+        state: directory
+        recurse: yes
+
+    - name: Copy files from template
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "/opt/certbot-deploy/{{ item }}"
+      loop:
+        - "docker-compose.yml"
+        - ".idemcertbot.env"
+
+    - name: Run Certbot image
+      ansible.builtin.shell: "docker compose up -d"
+      args:
+        chdir: "/opt/certbot-deploy"
+
+    - name: Delete Certbot folder
+      ansible.builtin.file:
+        path: "/opt/certbot-deploy"
+        state: absent
+
+    - name: Copy SSH key pair
+      ansible.builtin.copy:
+        src: "{{ item.name }}"
+        dest: "/home/debian/.ssh/{{ item.name }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { name: 'id_ed25519_certbot', mode: '0600' }
+        - { name: 'id_ed25519_certbot.pub', mode: '0644' }
+
+    - name: Create Certbot Cron file for Rsync
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0755"
+      loop:
+        - { src: 'rsync_idem_certbot', dest: '/etc/cron.d/rsync_idem_certbot' }
+        - { src: 'rsync_idem_certbot.sh', dest: '/usr/local/bin/rsync_idem_certbot.sh' }
+
+    - name: Run the first rsync to align all cnodes
+      ansible.builtin.shell: /usr/local/bin/rsync_idem_certbot.sh
