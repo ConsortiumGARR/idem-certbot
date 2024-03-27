@@ -5,7 +5,7 @@ ENV TZ="Europe/Rome"
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 RUN apt-get -y update && apt-get -y upgrade \
-    && apt-get install --no-install-recommends -y apt-utils build-essential vim git \
+    && apt-get install --no-install-recommends -y apt-utils build-essential vim git procps \
     ntp rsync python3-dev python3-pip python3-venv libaugeas0 cron 
 
 #CERTBOT
