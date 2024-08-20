@@ -1,5 +1,5 @@
 email_rao: mario.dilorenzo@garr.it
-certbot_version: 1.0.2
+certbot_version: 1.0.3
 
 idem_rt_domain: rt.idem.garr.it
 idem_rt_alias: rt.aai.garr.it

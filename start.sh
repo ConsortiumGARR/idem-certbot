@@ -13,6 +13,7 @@ if [ ! -d "/etc/letsencrypt/live/$IDEM_RT_DOMAIN" ]; then
         --email $EMAIL_RAO \
         --server https://acme.sectigo.com/v2/OV \
         --domain $IDEM_RT_DOMAIN,$IDEM_RT_ALIAS \
+	--key-type rsa \
         --rsa-key-size 3072 \
         --quiet --non-interactive --agree-tos 2>&1
 fi
@@ -23,6 +24,7 @@ if [ ! -d "/etc/letsencrypt/live/$IDEM_MDX_DOMAIN" ]; then
     --email $EMAIL_RAO \
     --server https://acme.sectigo.com/v2/OV \
     --domain $IDEM_MDX_DOMAIN,$IDEM_MDX_1ALIAS,$IDEM_MDX_2ALIAS,$IDEM_MDX_3ALIAS \
+    --key-type rsa \
     --rsa-key-size 3072 \
     --quiet --non-interactive --agree-tos 2>&1
 fi
@@ -33,6 +35,7 @@ if [ ! -d "/etc/letsencrypt/live/$EDUID_IDP_DOMAIN" ]; then
     --email $EMAIL_RAO \
     --server https://acme.sectigo.com/v2/OV \
     --domain $EDUID_IDP_DOMAIN \
+    --key-type rsa \
     --rsa-key-size 3072 \
     --quiet --non-interactive --agree-tos 2>&1
 fi
