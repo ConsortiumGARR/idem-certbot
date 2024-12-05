@@ -29,6 +29,17 @@ if [ ! -d "/etc/letsencrypt/live/$IDEM_MDX_DOMAIN" ]; then
     --quiet --non-interactive --agree-tos 2>&1
 fi
 
+if [ ! -d "/etc/letsencrypt/live/$IDEM_MDA_DOMAIN" ]; then
+    certbot certonly \
+    --standalone \
+    --email $EMAIL_RAO \
+    --server https://acme.sectigo.com/v2/OV \
+    --domain $IDEM_MDA_DOMAIN,$IDEM_MDA_1ALIAS \
+    --key-type rsa \
+    --rsa-key-size 3072 \
+    --quiet --non-interactive --agree-tos 2>&1
+fi
+
 if [ ! -d "/etc/letsencrypt/live/$EDUID_IDP_DOMAIN" ]; then
     certbot certonly \
     --standalone \

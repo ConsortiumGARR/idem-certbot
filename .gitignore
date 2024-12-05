@@ -1,0 +1,37 @@
+# emacs
+*~
+\#*\#
+
+# vi
+*.swp
+
+# Compiled python modules
+*.pyc
+
+# Tests artifacts
+.cache
+__pycache__
+
+# Python eggs
+*.egg-info
+
+#venv
+venv
+
+#coverage
+.coverage
+
+#vscode
+.vscode
+
+#pycharm
+.idea
+
+#vagrant
+.vagrant
+
+#vault
+.vault_pass.txt
+
+# Local
+inventory.ini
