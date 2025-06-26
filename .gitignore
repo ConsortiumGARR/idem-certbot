@@ -35,3 +35,4 @@ venv
 
 # Local
 inventory.ini
+playbook.yml

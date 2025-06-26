@@ -6,5 +6,11 @@ services:
     env_file:
       - ".idemcertbot.env"
     volumes:
-      - /opt/idem-certbot/:/etc/letsencrypt
-
+      - /srv/idem-certbot/:/etc/letsencrypt
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "certbot certificates > /dev/null 2>&1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 20s

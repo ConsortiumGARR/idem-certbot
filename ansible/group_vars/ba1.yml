@@ -1,0 +1,6 @@
+# Variables for VM on Bari site
+
+ippriv_first_cnode: 10.4.54.239
+ippriv_second_cnode: 10.4.54.242
+ippriv_third_cnode: 10.4.54.240
+ippriv_fourth_cnode: 10.4.54.237

@@ -1,8 +1,8 @@
 - name: Deployment Certbot
-  hosts: controller-ba1 # <INSERT_INVENTORY_HOST_OR_GROUP_NAME> 
+  hosts: # <INSERT_INVENTORY_HOST_OR_GROUP_NAME> 
   become: true
   become_method: sudo
-  remote_user: dilorenzo # <INSERT_THE_REMOTE_USER>
+  remote_user: # <INSERT_THE_REMOTE_USER>
   
   vars_files:
     - vars/secrets.yml
@@ -79,10 +79,10 @@
         - { src: 'rsync_idem_certbot.sh', dest: '/usr/local/bin/rsync_idem_certbot.sh' }
 
 - name: Deployment Certbot
-  hosts: ba1 # <INSERT_INVENTORY_HOST_OR_GROUP_NAME> 
+  hosts: # <INSERT_INVENTORY_HOST_OR_GROUP_NAME> 
   become: true
   become_method: sudo
-  remote_user: debian # <INSERT_THE_REMOTE_USER>
+  remote_user: # <INSERT_THE_REMOTE_USER>
 
   tasks:
     - name: Ensure certbot user exists with home and bash shell

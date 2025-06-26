@@ -1,3 +1,0 @@
-# crontab entries for the certbot package
-
-0 0,12 * * * root certbot renew -q >> /var/log/letsencrypt/letsencrypt.log 2>&1
