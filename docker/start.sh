@@ -12,4 +12,4 @@ echo "[setup][START] ACME account registration done!"
 
 # Exec del supervisor
 echo "[setup][START] Starting supervisord."
-exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+exec /usr/bin/supervisord -c /etc/supervisord.conf

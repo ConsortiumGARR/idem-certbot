@@ -28,7 +28,7 @@ COPY docker/certbot_cron /etc/crontabs/root
 RUN mkdir -p /var/log/supervisor/ \
     && mkdir -p /var/run/supervisord
 RUN chmod -R 0755 /var/log/supervisor
-COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
 
 # Copy the startup script and make it executable
 COPY docker/start.sh /usr/local/bin/start.sh
