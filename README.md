@@ -15,84 +15,104 @@ seguenti reti dal server `gitlab.dir.garr.it`:
 
 ## Base
 
-Ognuno sulla propria macchina personale deve:
+Sulla propria macchina personale si deve:
 
-1. Installare GIT:
+01. Installare GIT:
 
     - `sudo apt install --yes git`
 
-2. Installare Docker:
+02. Installare Docker:
 
     - <https://docs.docker.com/engine/install/debian/>
 
-3. Installare Ansible:
+03. Installare Ansible:
 
     - `sudo apt install --yes ansible`
 
-4. Spostarsi nella cartella dove depositare il codice preso da GIT:
+04. Spostarsi nella cartella dove depositare il codice preso da GIT:
 
     - `cd $HOME`
 
-5. Aggiungere la chiave privata, legata alla chiave pubblica usata dal
-    repository GIT, in un SSH Agent:
+05. Aggiungere la chiave privata, legata alla chiave pubblica usata dal repository GIT, in un SSH Agent:
 
-    (*questo passaggio è necessario* **SOLO** *se viene utilizzato SSH
-    per il recupero del repository GIT*)
+    (*questo passaggio è necessario* **SOLO** *se viene utilizzato SSH per il recupero del repository GIT*)
 
     - `eval "$(ssh-agent -s)"`
     - `ssh-add /PATH/SSH-PRIVATE-KEY`
 
-6. Clonare il repository GIT in una delle due modalità:
+06. Clonare il repository GIT in una delle due modalità:
 
-    - SSH: `git clone git@gitlab.dir.garr.it:IDEM/idem-certbot.git`
-      (**raccomandato**)
+    - SSH: `git clone git@gitlab.dir.garr.it:IDEM/idem-certbot.git` (**raccomandato**)
 
-      (con SSH è possibile usare la propria chiave privata per non
-      inserire sempre *username* e *password* di accesso)
+      (con SSH è possibile usare la propria chiave privata per non inserire sempre *username* e *password* di accesso)
 
-    - HTTPS:
-      `git clone https://gitlab.dir.garr.it/IDEM/idem-certbot.git`
+    - HTTPS: `git clone https://gitlab.dir.garr.it/IDEM/idem-certbot.git`
 
 ## Creazione di una nuova immagine Docker
 
-1. Aggiornare se necessario i file utili alla creazione dell'immagine
-    docker:
-    - `Dockerfile`
-    - `start.sh`
-2. Creare la nuova immagine per il certbot:
+01. Aggiornare, se necessario, i file utili alla creazione dell'immagine docker:
+
+    - `idem-certbot/docker/Dockerfile`
+    - `idem-certbot/docker/start.sh`
+
+02. Creare la nuova immagine (il numero di versione segue il [Semantic Versioning](https://semver.org/lang/it/)):
+
     - `cd $HOME/idem-certbot`
-    - `docker build -f docker/Dockerfile -t gitlab.dir.garr.it:4567/idem/idem-certbot:<INSERISCI_VERSIONE> .`
-3. Effettuare la login al container repository privato su GitLab:
+    - `docker build -f docker/Dockerfile -t gitlab.dir.garr.it:4567/idem/idem-certbot:MAJOR.MINOR.PATCH .`
+
+03. Effettuare la login al container registry:
+
     - `docker login gitlab.dir.garr.it:4567`
-4. Effettuare il push della nuova immagine all\'interno del container
-    repository:
-    - `docker push gitlab.dir.garr.it:4567/idem/idem-certbot:<INSERISCI_VERSIONE>`
+
+04. Effettuare il push della nuova immagine sul container registry:
+
+    - `docker push gitlab.dir.garr.it:4567/idem/idem-certbot:MAJOR.MINOR.PATCH`
 
 ## Deployment con Ansible
 
-Il deployment del progetto è effettuato tramite Ansible.
-Attualmente l'istanza di produzione del certbot è sul cnode `controller-ba1 IP:10.4.54.100`.
+Il deployment del progetto viene eseguito con Ansible.
+Attualmente l'istanza di produzione del certbot è sul `cnode1-ba1-controller` (`10.4.54.100`).
 
-La passphrase per decifrare/visualizzare/modificare il file dei secrets e per lanciare la ricetta Ansible si trova su [Password GARR](https://password.dir.garr.it/).
+La passphrase utilizzata per cifrare/decifrare/visualizzare/modificare il file `ansible/vars/secrets.yml` e per lanciare la ricetta Ansible si trova su [Password GARR](https://password.dir.garr.it/) in **Ansible Vault IDEM Setup repositories**.
 
-1. Assicurarsi che sia completato opportumanete il file `ansible/playbook.yml`.
+1. Se necessario, aggiornare le variabili in:
 
-2. Se necessario, aggiornare anche le variabili contenute in `ansible/group_vars` e/o i secrets, cifrati con ansible vault, contenuti in `ansible/vars/secrets.yml`.
+   - `ansible/group_vars`
+   - `ansible/vars`
 
-3. Lanciare il comando Ansible per il deployment dipendentemente dall'infrastruttura di deployment scelta:
+    La passphrase da utilizzare per cifrare/decifrare/visualizzare/modificare il file `ansible/vars/secrets.yml` si trova su [Password GARR](https://password.dir.garr.it/) in **Ansible Vault IDEM Setup repositories**.
 
-   1. Produzione in caso di Disaster-Recovery ( GARR Cloud Palermo ):
+2. Salvare la passphrease all'interno del file `idem-certbot/.vault_pass.txt`
 
-      ```bash
-      cd $HOME/idem-certbot/
-      
-      ansible-playbook ansible/playbook.yml -i ansible/inventory-pa1.ini --ask-vault-pass
-      ```
+3. Aggiungere la chiave privata, legata alla chiave pubblica usata dal repository GIT, in un SSH Agent:
 
-   2. Produzione ( GARR INFRA Bari ):
+    (*questo passaggio è necessario* **SOLO** *se viene utilizzato SSH per il recupero del repository GIT*)
 
-      ```bash
-      cd $HOME/idem-certbot/
-      
-      ansible-playbook ansible/playbook.yml -i ansible/inventory-ba1.ini --ask-vault-pass
-      ```
+    - `eval "$(ssh-agent -s)"`
+    - `ssh-add /PATH/SSH-PRIVATE-KEY`
+
+4. Lanciare il comando Ansible per il deployment dipendentemente dall'infrastruttura di deployment scelta:
+
+   - Test ( GARR Cloud Catania ):
+
+     ```bash
+     cd $HOME/idem-certbot/
+
+     ansible-playbook ansible/playbook-ct1.yml -i ansible/inventory-ct1.ini --vault-password-file .vault_pass.txt -u GARR_USER
+     ```
+
+   - Produzione in caso di Disaster-Recovery ( GARR Cloud Palermo ):
+
+     ```bash
+     cd $HOME/idem-certbot/
+
+     ansible-playbook ansible/playbook-pa1.yml -i ansible/inventory-pa1.ini --vault-password-file .vault_pass.txt -u GARR_USER
+     ```
+
+   - Produzione ( GARR INFRA Bari ):
+
+     ```bash
+     cd $HOME/idem-certbot/
+
+     ansible-playbook ansible/playbook-ba1.yml -i ansible/inventory-ba1.ini --vault-password-file .vault_pass.txt -u GARR_USER
+     ```
