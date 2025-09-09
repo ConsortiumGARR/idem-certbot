@@ -1,0 +1,23 @@
+---
+
+- name: Deploy Test Certbot
+  hosts: controller-ct1 
+  become: true
+  become_method: sudo
+  vars_files:
+    - vars/secrets.yml
+    - vars/test_domains.yml
+
+  tasks:
+    - name: Deploy Certbot on the Test controller nodes
+      ansible.builtin.import_tasks: deploy_certbot_tasks.yml
+
+
+- name: Configure Test Certbot
+  hosts: ct1 
+  become: true
+  become_method: sudo
+
+  tasks:
+    - name: Config Certbot on the Test container nodes
+      ansible.builtin.import_tasks: config_certbot_tasks.yml

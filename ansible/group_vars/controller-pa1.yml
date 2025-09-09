@@ -1,0 +1,7 @@
+# Variables for VMs on Palermo site
+
+ippriv_cnodes:
+  - 192.168.2.139 # pa1-n1
+  - 192.168.1.1   # pa1-n2
+  - 192.168.4.139 # pa1-n3
+  - 192.168.1.94  # pa1-n4

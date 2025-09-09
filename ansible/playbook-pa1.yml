@@ -1,0 +1,23 @@
+---
+
+- name: Deploy Pre-prod Certbot
+  hosts: controller-pa1 
+  become: true
+  become_method: sudo
+  vars_files:
+    - vars/secrets.yml
+    - vars/prod_domains.yml
+
+  tasks:
+    - name: Deploy Certbot on the Pre-prod controller nodes
+      ansible.builtin.import_tasks: deploy_certbot_tasks.yml
+
+
+- name: Configure Pre-prod Certbot
+  hosts: pa1 
+  become: true
+  become_method: sudo
+
+  tasks:
+    - name: Config Certbot on the Pre-prod container nodes
+      ansible.builtin.import_tasks: config_certbot_tasks.yml

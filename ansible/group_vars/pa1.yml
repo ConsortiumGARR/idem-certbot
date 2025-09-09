@@ -1,6 +1,0 @@
-# Variables for VM on Palermo site
-
-ippriv_first_cnode: 192.168.2.139
-ippriv_second_cnode: 192.168.1.1
-ippriv_third_cnode: 192.168.4.139
-ippriv_fourth_cnode: 192.168.1.94

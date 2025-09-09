@@ -1,0 +1,6 @@
+# Variables for VMs on Catania site
+
+ippriv_cnodes:
+  - 192.168.40.41 # ct1-n1
+  - 192.168.40.57 # ct1-n2
+  - 192.168.40.79 # ct1-n3
