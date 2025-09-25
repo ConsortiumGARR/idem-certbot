@@ -150,7 +150,7 @@ La passphrase utilizzata per cifrare/decifrare/visualizzare/modificare il file `
     EMAIL_ADMIN=<MAIL-UTENTE>
     KEY_ID=<KEY-ID-VALUE>
     HMAC_KEY=<HMAC_KEY_VALUE>
-    SERVER_URL=https://acme-v02.harica.gr/acme/7e62cf2e-68f9-4b4d-9db1-e934a6251674/directory
+    SERVER_URL=<ACME-SERVER-URL>
 
     #DOMAINS_LIST=domain1:alias1,alias2;domain2;domain3:alias1
     DOMAINS_LIST=example.com:www.example.com,mail.example.com;test.org;mysite.net:blog.mysite.net
