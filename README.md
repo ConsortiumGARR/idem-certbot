@@ -116,3 +116,50 @@ La passphrase utilizzata per cifrare/decifrare/visualizzare/modificare il file `
 
      ansible-playbook ansible/playbook-ba1.yml -i ansible/inventory-ba1.ini --vault-password-file .vault_pass.txt -u GARR_USER
      ```
+
+## Deployment per VM
+
+01. Creare la cartella che conterrà quanto necessario sulla VM:
+
+    `mkdir /opt/idem-certbot`
+
+02. Creare `/opt/idem-certbot/docker-compose.yml`:
+
+    ```bash
+    services:
+    idem-certbot:
+        image: "gitlab.dir.garr.it:4567/idem/idem-certbot:{{ certbot_version }}"
+        container_name: "idem-certbot"
+        hostname: idem-certbot
+        env_file:
+        - ".idemcertbot.env"
+        volumes:
+        - /etc/letsencrypt/:/etc/letsencrypt
+        restart: unless-stopped
+        healthcheck:
+        test: ["CMD-SHELL", "certbot certificates > /dev/null 2>&1"]
+        interval: 1m
+        timeout: 10s
+        retries: 3
+        start_period: 20s
+    ```
+
+03. Creare `/opt/idem-certbot/.idemcertbot.env`:
+
+    ```bash
+    EMAIL_ADMIN=<MAIL-UTENTE>
+    KEY_ID=<KEY-ID-VALUE>
+    HMAC_KEY=<HMAC_KEY_VALUE>
+    SERVER_URL=<ACME-SERVER-URL>
+
+    #DOMAINS_LIST=domain1:alias1,alias2;domain2;domain3:alias1
+    DOMAINS_LIST=example.com:www.example.com,mail.example.com;test.org;mysite.net:blog.mysite.net
+    ```
+
+04. Avviare il Certbot:
+
+    `sudo docker compose pull && sudo docker compose up -d`
+
+05. Utilizzare i certificati disponibili in `/etc/letsencrypt`.
+
+06. Una volta avviato il container è possibile eliminare il file `idemcertbot.env`.
