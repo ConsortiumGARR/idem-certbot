@@ -60,6 +60,14 @@
     - { name: 'id_ed25519_certbot', mode: '0600' }
     - { name: 'id_ed25519_certbot.pub', mode: '0644' }
 
+- name: Ensure /srv/idem-certbot directory has the right privileges
+  ansible.builtin.file:
+    path: "/srv/idem-certbot"
+    state: directory
+    owner: certbot
+    group: certbot
+    recurse: true
+
 - name: Create Certbot Cron file for Rsync
   ansible.builtin.template:
     src: "{{ item.src }}"
