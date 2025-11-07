@@ -9,6 +9,7 @@ domains:
     aliases: []
   - domain: eduid.it
     aliases:
+      - www.eduid.it
       - mfa.eduid.it
       - idm.eduid.it
       - idp.eduid.it
