@@ -5,9 +5,13 @@ domains:
   - domain: md.idem.garr.it
     aliases: 
       - md.aai.garr.it
-  - domain: eduid.aai.garr.it
-    aliases: 
-      - eduid-indire.aai.garr.it
+  - domain: eduid-indire.aai.garr.it
+    aliases: []
+  - domain: eduid.it
+    aliases:
+      - mfa.eduid.it
+      - idm.eduid.it
+      - idp.eduid.it
   - domain: rt.idem.garr.it
     aliases: 
       - rt.aai.garr.it
