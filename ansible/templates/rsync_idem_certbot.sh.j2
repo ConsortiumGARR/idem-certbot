@@ -1,15 +1,37 @@
 #!/bin/bash
+set -euo pipefail
+trap "exit" SIGHUP SIGINT SIGTERM
 
+# Array degli IP dai template Jinja2
 ip_addresses=({% for ip in ippriv_cnodes %}"{{ ip }}"{% if not loop.last %} {% endif %}{% endfor %})
 
-if [ -d "/srv/idem-certbot" ]; then
-    tar -cf - --exclude last_update --absolute-names /srv/idem-certbot | sha1sum > /srv/idem-certbot/last_update
-    for HOST_IP in "${ip_addresses[@]}"
-    do
-        rsync -a -s -e "ssh -i /home/certbot/.ssh/id_ed25519_certbot" /srv/idem-certbot/ certbot@$HOST_IP:/srv/idem-certbot/
-    if [ "$?" -eq "0" ]; then
-            echo "$(date): Rsync della cartella /srv/idem-certbot correttamente effettuato! - Host: $HOST_IP" >> /var/log/cron.log 2>&1
-        fi
-    done
+SRC_DIR="/srv/idem-certbot"
+LOG_FILE="/var/log/cron.log"
+SSH_KEY="/home/certbot/.ssh/id_ed25519_certbot"
+USER="certbot"
+
+# Controllo che la chiave SSH esista
+if [ ! -f "$SSH_KEY" ]; then
+    echo "$(date) [sync] ERRORE: chiave SSH $SSH_KEY non trovata!" >> "$LOG_FILE"
+    exit 1
 fi
 
+# Imposta permessi
+chown -R "$USER":"$USER" "$SRC_DIR"
+
+# Controlla se la cartella esiste
+if [ -d "$SRC_DIR" ]; then
+    # Calcola hash della cartella escludendo last_update
+    tar -cf - --exclude last_update -C "$SRC_DIR" . | sha1sum > "$SRC_DIR/last_update"
+
+    # Loop su tutti gli host
+    for HOST_IP in "${ip_addresses[@]}"; do
+        if rsync -a -s -e "ssh -i $SSH_KEY" "$SRC_DIR/" "$USER@$HOST_IP:$SRC_DIR/"; then
+            echo "$(date) [sync] Rsync della cartella $SRC_DIR correttamente effettuato! - Host: $HOST_IP" >> "$LOG_FILE"
+        else
+            echo "$(date) [sync] ERRORE Rsync fallito per Host: $HOST_IP" >> "$LOG_FILE"
+        fi
+    done
+else
+    echo "$(date) [sync] Cartella $SRC_DIR non trovata, skipping sync." >> "$LOG_FILE"
+fi

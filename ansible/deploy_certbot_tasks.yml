@@ -36,10 +36,10 @@
   args:
     chdir: "/opt/certbot-deploy"
 
-- name: Delete Certbot folder
-  ansible.builtin.file:
-    path: "/opt/certbot-deploy"
-    state: absent
+# - name: Delete Certbot folder
+#   ansible.builtin.file:
+#     path: "/opt/certbot-deploy"
+#     state: absent
 
 - name: Ensure .ssh directory exists for certbot
   ansible.builtin.file:
