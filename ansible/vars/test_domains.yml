@@ -1,3 +1,5 @@
 domains: 
   - domain: tools.aai-test.garr.it
     aliases: []
+  - domain: conf.aai-test.garr.it
+    aliases: []
