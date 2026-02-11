@@ -6,7 +6,7 @@ trap "exit" SIGHUP SIGINT SIGTERM
 ip_addresses=({% for ip in ippriv_cnodes %}"{{ ip }}"{% if not loop.last %} {% endif %}{% endfor %})
 
 SRC_DIR="/srv/idem-certbot"
-LOG_FILE="/var/log/cron.log"
+LOG_FILE="/var/log/rsync-certbot.log"
 SSH_KEY="/home/certbot/.ssh/id_ed25519_certbot"
 USER="certbot"
 
