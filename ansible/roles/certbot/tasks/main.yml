@@ -1,0 +1,29 @@
+---
+
+# Always include common configuration
+- name: Include common Certbot configuration
+  import_tasks: config_common.yml
+
+# Import Docker image if archive exists
+- name: Include Docker image import tasks
+  import_tasks: import_docker_image.yml
+  when: "'certbot_nodes' in group_names"
+
+# Docker deployment on certbot_nodes hosts
+- name: Include Certbot deployment tasks
+  import_tasks: deploy.yml
+  when: "'certbot_nodes' in group_names"
+
+# Rsync sender only if certbot_mode is centralized
+- name: Include Certbot rsync sender tasks (centralized mode)
+  import_tasks: rsync_sender.yml
+  when:
+    - "'certbot_nodes' in group_names"
+    - certbot_mode | default('standalone') == 'centralized'
+
+# Rsync receiver only on rsync_targets hosts if certbot_mode is centralized
+- name: Include Certbot rsync receiver tasks (centralized mode)
+  import_tasks: rsync_receiver.yml
+  when: 
+    - "'rsync_targets' in group_names"
+    - certbot_mode | default('standalone') == 'centralized'

@@ -3,11 +3,11 @@ set -euo pipefail
 trap "exit" SIGHUP SIGINT SIGTERM
 
 # Array degli IP dai template Jinja2
-ip_addresses=({% for ip in ippriv_cnodes %}"{{ ip }}"{% if not loop.last %} {% endif %}{% endfor %})
+ip_addresses=({% for ip in ip_priv_rsync_nodes %}"{{ ip }}"{% if not loop.last %} {% endif %}{% endfor %})
 
-SRC_DIR="/srv/idem-certbot"
+SRC_DIR="{{ certbot_data_volume }}"
 LOG_FILE="/var/log/rsync-certbot.log"
-SSH_KEY="/home/certbot/.ssh/id_ed25519_certbot"
+SSH_KEY="/home/certbot/.ssh/{{ ssh_key_name }}"
 USER="certbot"
 
 # Controllo che la chiave SSH esista
@@ -26,7 +26,7 @@ if [ -d "$SRC_DIR" ]; then
 
     # Loop su tutti gli host
     for HOST_IP in "${ip_addresses[@]}"; do
-        if rsync -a -s -e "ssh -i $SSH_KEY" "$SRC_DIR/" "$USER@$HOST_IP:$SRC_DIR/"; then
+        if rsync -a -s -e "ssh -i $SSH_KEY" -o StrictHostKeyChecking=no "$SRC_DIR/" "$USER@$HOST_IP:$SRC_DIR/"; then
             echo "$(date) [sync] Rsync della cartella $SRC_DIR correttamente effettuato! - Host: $HOST_IP" >> "$LOG_FILE"
         else
             echo "$(date) [sync] ERRORE Rsync fallito per Host: $HOST_IP" >> "$LOG_FILE"

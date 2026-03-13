@@ -1,0 +1,30 @@
+---
+
+- name: Check if a Docker image archive exists in role files
+  delegate_to: localhost
+  run_once: true
+  become: false
+  ansible.builtin.stat:
+    path: "{{ inventory_dir }}/files/{{ docker_image }}_{{ tag }}.tar.gz"
+  register: docker_image_archive
+
+- name: Copy Docker image archive to remote host
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/files/{{ docker_image }}_{{ tag }}.tar.gz"
+    dest: "/tmp/{{ docker_image }}_{{ tag }}.tar.gz"
+    mode: '0644'
+  when: docker_image_archive.stat.exists
+
+- name: Load Docker image from tar.gz
+  community.docker.docker_image:
+    name: "{{ docker_image }}"
+    tag: "{{ tag }}"
+    load_path: "/tmp/{{ docker_image }}_{{ tag }}.tar.gz"
+    source: load
+  when: docker_image_archive.stat.exists
+
+- name: Remove temporary Docker image archive
+  ansible.builtin.file:
+    path: "/tmp/{{ docker_image }}_{{ tag }}.tar.gz"
+    state: absent
+  when: docker_image_archive.stat.exists

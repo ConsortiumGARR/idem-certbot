@@ -2,27 +2,52 @@
 set -euo pipefail
 trap "exit" SIGHUP SIGINT SIGTERM
 
-for VAR in EMAIL_ADMIN SERVER_URL KEY_ID HMAC_KEY DOMAINS_LIST; do
+# Always required variables
+for VAR in EMAIL_ADMIN DOMAINS_LIST; do
   if [ -z "${!VAR}" ]; then
     echo "[setup] Missing variable: $VAR. Please set it with -e '$VAR=' or check your docker-compose configuration."
     exit 1
   fi
 done
 
-# Register ACME account
+# Check if EAB variables are set, if not, we will use standard Let's Encrypt registration
+USE_EAB=true
+for VAR in SERVER_URL KEY_ID HMAC_KEY; do
+  if [ -z "${!VAR:-}" ]; then
+    USE_EAB=false
+    break
+  fi
+done
+echo "[setup] USE_EAB=$USE_EAB"
+
+# Register ACME account if not already registered
 echo "[registration] Register ACME account."
 
-if ! certbot register \
-        --email "$EMAIL_ADMIN" \
-        --server "$SERVER_URL" \
-        --eab-kid "$KEY_ID" \
-        --eab-hmac-key "$HMAC_KEY" \
-        --non-interactive \
-        --agree-tos 2>&1 | grep -q "There is an existing account"; then
-    echo "[registration] ACME account registration done!"
+if $USE_EAB; then
+    echo "[registration] Using ACME EAB."
+    if ! certbot register \
+            --email "$EMAIL_ADMIN" \
+            --server "$SERVER_URL" \
+            --eab-kid "$KEY_ID" \
+            --eab-hmac-key "$HMAC_KEY" \
+            --non-interactive \
+            --agree-tos 2>&1 | grep -q "There is an existing account"; then
+        echo "[registration] ACME account registration done!"
+    else
+        echo "[registration] ACME account already exists, skipping registration."
+    fi
 else
-    echo "[registration] ACME account already exists, skipping registration."
+    echo "[registration] Using Let's Encrypt standard."
+    if ! certbot register \
+            --email "$EMAIL_ADMIN" \
+            --agree-tos \
+            --non-interactive 2>&1 | grep -q "There is an existing account"; then
+        echo "[registration] ACME account registration done!"
+    else
+        echo "[registration] ACME account already exists, skipping registration."
+    fi
 fi
+
 
 # Function to request a new certificate if it doesn't exist
 create_cert() {
@@ -41,16 +66,33 @@ create_cert() {
 
     # Check if certificate already exists
     if [ ! -f "/etc/letsencrypt/live/$domain/cert.pem" ]; then
-        echo "[certificates] Creating certificate for $domain"
+      echo "[certificates] Creating certificate for $domain"
 
-        certbot certonly \
-            --standalone \
-            --email "$EMAIL_ADMIN" \
-            --server "$SERVER_URL" \
-            "${domain_args[@]}" \
-            --key-type rsa \
-            --rsa-key-size 3072 \
-            --quiet --non-interactive --agree-tos 2>&1
+      if $USE_EAB; then
+          certbot certonly \
+              --standalone \
+              --email "$EMAIL_ADMIN" \
+              --server "$SERVER_URL" \
+              --eab-kid "$KEY_ID" \
+              --eab-hmac-key "$HMAC_KEY" \
+              "${domain_args[@]}" \
+              --key-type rsa \
+              --rsa-key-size 3072 \
+              --quiet --non-interactive --agree-tos 2>&1
+      else
+          certbot certonly \
+              --standalone \
+              --email "$EMAIL_ADMIN" \
+              "${domain_args[@]}" \
+              --key-type rsa \
+              --rsa-key-size 3072 \
+              --quiet --non-interactive --agree-tos 2>&1
+      fi
+      if [ $? -eq 0 ]; then
+          echo "[certificates] Certificate for $domain created successfully."
+      else
+          echo "[certificates] Error: Failed to create certificate for $domain!" >&2
+      fi
     else
         echo "[certificates] Certificate for $domain already exists."
     fi

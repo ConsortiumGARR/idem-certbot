@@ -1,0 +1,25 @@
+---
+
+- name: Ensure certbot system user is present
+  ansible.builtin.user:
+    name: certbot
+    home: /home/certbot
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: Ensure certbot volume directory exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: certbot
+    group: certbot
+    mode: '0755'
+  loop:
+    - "{{ certbot_data_volume }}"
+    - /home/certbot/.ssh
+
+- name: Ensure rsync exists
+  ansible.builtin.apt:
+    name: rsync
+    state: present

@@ -1,0 +1,50 @@
+# This file contains the variables for the Certbot. 
+# It is used by Ansible to configure the Certbot container and manage SSL certificates for the specified domains if the mode is set to 'centralized'.
+
+# Docker compose configuration, modify these variables according to your needs and environment.
+docker_image: <CHOSEN-DOCKER-IMAGE-NAME>
+tag: <CHOSEN-TAG>
+container_name: certbot
+hostname: certbot
+certbot_data_volume: /srv/certbot
+
+# SSH key name used by Ansible to connect the certbot_node to the rsync_nodes.
+ssh_key_name: id_ed25519_certbot
+
+# Certbot mode, can be 'standalone' or 'centralized'.
+# In 'standalone' mode, each certbot_node manages its own certificates independently.
+# In 'centralized' mode, one certbot_node manages the certificates and synchronizes them with the other nodes using rsync.
+certbot_mode: standalone
+
+# List of private IP addresses of the nodes that will be used for rsync to synchronize certificates across the cluster.
+# You can add as many IP addresses as needed, just make sure to replace the example IPs with the actual private IPs of your nodes.
+ip_priv_rsync_nodes:
+  - xxx.xxx.xxx.xxx # private IP of the first node
+  - yyy.yyy.yyy.yyy # private IP of the second node
+  - zzz.zzz.zzz.zzz # private IP of the third node
+
+# ACME client credentials and server URL for certificate management.
+# These are given by your ACME client provider and are required for Certbot to request and manage SSL certificates.
+# If you want to use Let's Encrypt without EAB, leave these variables EMPTY.
+email_admin:
+key_id: 
+hmac_key: 
+server_url:
+
+# Check frequency for certificate renewal in hours. 
+# This variable is used to determine how often Certbot should check for certificate expiration and attempt renewal if necessary.
+# Default is set to 12 hours, which means Certbot will check twice a day for certificate renewal.
+check_frequency: 12
+
+# List of domains and their aliases for which certificates will be managed by Certbot. 
+# Each domain can have multiple aliases, which will be included in the same certificate as the main domain.
+# Leave the aliases list empty if there are no aliases for a domain.
+domains: 
+  - domain: aaa.example.it
+    aliases: []
+  - domain: bbb.example.it
+    aliases:
+      - www.bbb.example.it
+      - xxx.bbb.example.it
+      - yyy.bbb.example.it
+      - zzz.bbb.example.it

@@ -1,12 +1,12 @@
 services:
   idem-certbot:
-    image: "gitlab.dir.garr.it:4567/idem/idem-certbot:{{ certbot_version }}"
-    container_name: "idem-certbot"
-    hostname: idem-certbot
+    image: "{{ docker_image }}:{{ tag }}"
+    container_name: "{{ container_name }}"
+    hostname: "{{ hostname }}"
     env_file:
-      - ".idemcertbot.env"
+      - ".certbot.env"
     volumes:
-      - /srv/idem-certbot/:/etc/letsencrypt
+      - "{{ certbot_data_volume }}:/etc/letsencrypt"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "certbot certificates > /dev/null 2>&1"]
