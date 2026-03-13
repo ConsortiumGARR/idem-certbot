@@ -1,0 +1,7 @@
+---
+
+- name: Certbot setup
+  hosts: certbot_nodes:rsync_targets
+  become: true
+  roles:
+    - certbot

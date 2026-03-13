@@ -1,0 +1,63 @@
+---
+
+- name: Create Certbot folder
+  ansible.builtin.file:
+    path: "/opt/certbot-deploy"
+    state: directory
+
+- name: Generate DOMAINS_LIST string
+  ansible.builtin.set_fact:
+    domains_list: >-
+      {{
+        domains
+        | map(attribute='domain')
+        | zip(domains | map(attribute='aliases') | map('join', ','))
+        | map('join', ':')
+        | map('regex_replace', ':$', '')
+        | join(';')
+      }}
+
+- name: Copy files from template
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/opt/certbot-deploy/{{ item }}"
+  loop:
+    - "docker-compose.yml"
+    - ".certbot.env"
+
+- name: Ensure Certbot container is defined and pulled
+  community.docker.docker_compose_v2:
+    project_src: "/opt/certbot-deploy"
+    pull: missing
+    state: present
+
+- name: Check if the certbot container exists
+  community.docker.docker_container_info:
+    name: "{{ container_name }}"
+  register: certbot_info
+  ignore_errors: true
+
+- name: Start the container if not running
+  community.docker.docker_compose_v2:
+    project_src: "/opt/certbot-deploy"
+    state: present
+  when: certbot_info.failed or certbot_info.containers is not defined
+
+- name: Restart the container if already running - needed to request certificates after the first deployment
+  community.docker.docker_container:
+    name: "{{ container_name }}"
+    state: restarted
+  when: certbot_info.containers is defined
+
+- name: Wait for Docker container to be healthy
+  ansible.builtin.shell: docker inspect --format '{{ "{{.State.Health.Status}}" }}' "{{ container_name }}"
+  register: docker_health
+  until: docker_health.stdout | trim == 'healthy'
+  retries: 30
+  delay: 5
+  changed_when: false
+
+- name: Delete Certbot deployment folder to preserve security
+  ansible.builtin.file:
+    path: "/opt/certbot-deploy"
+    state: absent

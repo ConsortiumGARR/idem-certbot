@@ -34,5 +34,5 @@ venv
 .vault_pass.txt
 
 # Local
-inventory.ini
-playbook.yml
+inventory_local.ini
+playbook_local.yml

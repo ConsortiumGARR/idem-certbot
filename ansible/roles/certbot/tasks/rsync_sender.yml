@@ -1,0 +1,21 @@
+---
+
+- name: Copy SSH key pair for certbot user
+  ansible.builtin.copy:
+    src: "{{ inventory_dir }}/files/{{ item.name }}"
+    dest: "/home/certbot/.ssh/{{ item.name }}"
+    mode: "{{ item.mode }}"
+    owner: certbot
+    group: certbot
+  loop:
+    - { name: '{{ ssh_key_name }}', mode: '0600' }
+    - { name: '{{ ssh_key_name }}.pub', mode: '0644' }
+
+- name: Create Certbot Cron file for Rsync
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0755"
+  loop:
+    - { src: 'rsync_certbot_cron', dest: '/etc/cron.d/rsync_certbot' }
+    - { src: 'rsync_certbot.sh.j2', dest: '/usr/local/bin/rsync_certbot.sh' }

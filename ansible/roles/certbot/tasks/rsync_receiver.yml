@@ -1,0 +1,7 @@
+---
+
+- name: Install certbot authorized SSH public key
+  ansible.builtin.authorized_key:
+    user: certbot
+    state: present
+    key: "{{ lookup('file', '{{ inventory_dir }}/files/{{ ssh_key_name }}.pub') }}"

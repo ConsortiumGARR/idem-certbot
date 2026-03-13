@@ -1,165 +1,154 @@
-# CERTBOT
+# IDEM CERTBOT
 
-## Note
+This repository contains a fully automated Certbot in Docker that manages ACME account registration and SSL/TLS certificate issuance. It supports both standard Let's Encrypt and ACME EAB (External Account Binding).
 
-Per poter eseguire `docker pull` delle immagini docker è necessario
-concedere l\'accesso SSH(22), HTTP(80), HTTPS(443), GitLab(4567) alle
-seguenti reti dal server `gitlab.dir.garr.it`:
+It can operate in two modes:
 
-- 90.147.166.0/23
-- 90.147.167.0/23
-- 90.147.188.0/23
-- 90.147.189.0/23
-- 90.147.156.0/23
-- 90.147.200.0/25
+- **Standalone** – for using certificates directly on the VM running Docker.
 
-## Base
+- **Centralized** – the first node requests certificates, which are then synced to other nodes via rsync.
 
-Sulla propria macchina personale si deve:
+## Prerequisites
 
-01. Installare GIT:
+### Local usage
 
-    - `sudo apt install --yes git`
+- Docker
+- An ACME account (required only if using ACME EAB).
 
-02. Installare Docker:
+### Remote usage
 
-    - <https://docs.docker.com/engine/install/debian/>
+- Ansible installed on your node.
+- Docker installed on the remote machines.
+- An ACME account (required only if using ACME EAB).
 
-03. Installare Ansible:
+## Environment Variables
 
-    - `sudo apt install --yes ansible`
+| Variable | Description | Is Required? |
+| -------- | ----------- | --------- |
+| EMAIL_ADMIN | Admin email for ACME registration | Yes |
+| DOMAINS_LIST | List of domains to certificate, separated by ; with optional aliases after :. Example: example.com:www.example.com;example.org | Yes - Structure managed by Ansible |
+| SERVER_URL | ACME server URL | Yes, only for ACME EAB |
+| KEY_ID | EAB key identifier | Yes, only for ACME EAB |
+| HMAC_KEY | HMAC key for EAB | Yes, only for ACME EAB |
+| CHECK_FREQ | Hours between certificate checks and renewal | No  - Default: 12 |
 
-04. Spostarsi nella cartella dove depositare il codice preso da GIT:
+## How It Works
 
-    - `cd $HOME`
+### ACME Registration
 
-05. Aggiungere la chiave privata, legata alla chiave pubblica usata dal repository GIT, in un SSH Agent:
+1. Verifies required variables; exits if missing.
+2. It checks for EAB variables:
+    - If present → uses ACME EAB.
+    - If absent → uses standard Let's Encrypt.
+3. Registers the ACME account via certbot register.
+4. Skips if the account already exists on the mounted folder.
 
-    (*questo passaggio è necessario* **SOLO** *se viene utilizzato SSH per il recupero del repository GIT*)
+### Certificate Creation
 
-    - `eval "$(ssh-agent -s)"`
-    - `ssh-add /PATH/SSH-PRIVATE-KEY`
+- `create_cert` function handles certificate creation per domain.
+- Supports multiple aliases.
+- Checks if certificate exists in `/etc/letsencrypt/live/$domain`.
+  - Creates certificate, if missing, using `certbot certonly --standalone`.
+  - Skips if certificate already exists.
+- Splits `DOMAINS_LIST` by ; and parses aliases with :.
 
-06. Clonare il repository GIT in una delle due modalità:
+### Automatic Renewal
 
-    - SSH: `git clone git@gitlab.dir.garr.it:IDEM/idem-certbot.git` (**raccomandato**)
+- After certificate creation, the script enters an infinite loop.
+- Uses `CHECK_FREQ` (hours) to determine how frequent the renew check is performed.
+- Executes `certbot renew -q` every cycle.
+- Logs errors if renewal fails.
+- Sleeps `CHECK_FREQ` hours between cycles.
 
-      (con SSH è possibile usare la propria chiave privata per non inserire sempre *username* e *password* di accesso)
+## Instructions
 
-    - HTTPS: `git clone https://gitlab.dir.garr.it/IDEM/idem-certbot.git`
+### Docker image creation
 
-## Creazione di una nuova immagine Docker
+1. Retrieve the repository with `git clone`.
 
-01. Aggiornare, se necessario, i file utili alla creazione dell'immagine docker:
+2. Move inside the `idem-certbot` repository folder.
 
-    - `idem-certbot/docker/Dockerfile`
-    - `idem-certbot/docker/start.sh`
+3. Build the image:
 
-02. Creare la nuova immagine (il numero di versione segue il [Semantic Versioning](https://semver.org/lang/it/)):
+    ```bash
+    docker build -f docker/Dockerfile -t <CHOOSE-A-DOCKER-IMAGE-NAME>:<CHOOSE-A-TAG> .
+    ```
 
-    - `cd $HOME/idem-certbot`
-    - `docker build -f docker/Dockerfile -t gitlab.dir.garr.it:4567/idem/idem-certbot:MAJOR.MINOR.PATCH .`
+### Deploy
 
-03. Effettuare la login al container registry:
+#### With Ansible
 
-    - `docker login gitlab.dir.garr.it:4567`
+1. Move inside the `idem-certbot` repository folder.
 
-04. Effettuare il push della nuova immagine sul container registry:
+2. Copy the `ansible/inventories/example` folder to `ansible/inventories/<YOUR-FOLDER-NAME>/`.
 
-    - `docker push gitlab.dir.garr.it:4567/idem/idem-certbot:MAJOR.MINOR.PATCH`
+3. Create an SSH key pair under the `ansible/inventories/<YOUR-FOLDER-NAME>/files`:
 
-## Deployment con Ansible
+   - `ssh-keygen -t ed25519 -f ansible/inventories/<YOUR-FOLDER-NAME>/files/id_ed25519_certbot -N ""`
 
-Il deployment del progetto viene eseguito con Ansible.
-Attualmente l'istanza di produzione del certbot è sul `cnode1-ba1-controller` (`10.4.54.100`).
+> [!IMPORTANT]
+> **You need to protect the private key! You can use [Ansible Vault](https://docs.ansible.com/projects/ansible/latest/vault_guide/vault_encrypting_content.html).**
 
-La passphrase utilizzata per cifrare/decifrare/visualizzare/modificare il file `ansible/vars/secrets.yml` e per lanciare la ricetta Ansible si trova su [Password GARR](https://password.dir.garr.it/) in **Ansible Vault IDEM Setup repositories**.
+4. To make the Docker image available to remote nodes, it must either be pushed to a private container registry or the image (in tar.gz format) must be sent to the remote node (already implemented with Ansible).
 
-1. Se necessario, aggiornare le variabili in:
-
-   - `ansible/group_vars`
-   - `ansible/vars`
-
-    La passphrase da utilizzare per cifrare/decifrare/visualizzare/modificare il file `ansible/vars/secrets.yml` si trova su [Password GARR](https://password.dir.garr.it/) in **Ansible Vault IDEM Setup repositories**.
-
-2. Salvare la passphrease all'interno del file `idem-certbot/.vault_pass.txt`
-
-3. Aggiungere la chiave privata, legata alla chiave pubblica usata dal repository GIT, in un SSH Agent:
-
-    (*questo passaggio è necessario* **SOLO** *se viene utilizzato SSH per il recupero del repository GIT*)
-
-    - `eval "$(ssh-agent -s)"`
-    - `ssh-add /PATH/SSH-PRIVATE-KEY`
-
-4. Lanciare il comando Ansible per il deployment dipendentemente dall'infrastruttura di deployment scelta:
-
-   - Test ( GARR Cloud Catania ):
+   - Push the image to a private container registry:
 
      ```bash
-     cd $HOME/idem-certbot/
-
-     ansible-playbook ansible/playbook-ct1.yml -i ansible/inventory-ct1.ini --vault-password-file .vault_pass.txt -u GARR_USER
+     docker push <CHOSEN-DOCKER-IMAGE-NAME>:<CHOSEN-TAG>
      ```
 
-   - Produzione in caso di Disaster-Recovery ( GARR Cloud Palermo ):
+> [!NOTE]
+> If you are using a private container registry, the Docker image name must also include the container registry URL.
+
+   - Create a tar.gz archive of the created Docker image:
 
      ```bash
-     cd $HOME/idem-certbot/
-
-     ansible-playbook ansible/playbook-pa1.yml -i ansible/inventory-pa1.ini --vault-password-file .vault_pass.txt -u GARR_USER
+     docker save <CHOSEN-DOCKER-IMAGE-NAME>:<CHOSEN-TAG> | gzip > ansible/inventories/<YOUR-FOLDER-NAME>/files/<CHOSEN-DOCKER-IMAGE-NAME>_<CHOSEN-TAG>.tar.gz
      ```
 
-   - Produzione ( GARR INFRA Bari ):
+5. Modify as needed:
 
-     ```bash
-     cd $HOME/idem-certbot/
+   - `ansible/inventories/<YOUR-FOLDER-NAME>/inventory.ini`
+   - `ansible/inventories/<YOUR-FOLDER-NAME>/group_vars/all.yml`
 
-     ansible-playbook ansible/playbook-ba1.yml -i ansible/inventory-ba1.ini --vault-password-file .vault_pass.txt -u GARR_USER
-     ```
+> [!IMPORTANT]
+> **You need to protect your secrets! You can use [Ansible Vault](https://docs.ansible.com/projects/ansible/latest/vault_guide/vault_encrypting_content.html).**
 
-## Deployment per VM
+6. Run the Ansible Playbook command (with vaulted secrets):
 
-01. Creare la cartella che conterrà quanto necessario sulla VM:
+    ```bash
+    ansible-playbook ansible/playbook.yml -u <USER-ON-REMOTE-VM> -i ansible/inventories/<YOUR-FOLDER-NAME>/inventory.ini --ask-vault-pass
+    ```
 
-    `mkdir /opt/idem-certbot`
+#### Without Ansible - Locally
 
-02. Creare `/opt/idem-certbot/docker-compose.yml`:
+1. Create a `docker-compose.yml` file and modify it as needed:
 
     ```bash
     services:
-    idem-certbot:
-        image: "gitlab.dir.garr.it:4567/idem/idem-certbot:{{ certbot_version }}"
-        container_name: "idem-certbot"
-        hostname: idem-certbot
-        env_file:
-        - ".idemcertbot.env"
-        volumes:
-        - /etc/letsencrypt/:/etc/letsencrypt
-        restart: unless-stopped
-        healthcheck:
-        test: ["CMD-SHELL", "certbot certificates > /dev/null 2>&1"]
-        interval: 1m
-        timeout: 10s
-        retries: 3
-        start_period: 20s
+        idem-certbot:
+            image: "<DOCKER-IMAGE-NAME>:<TAG>"
+            container_name: "custom-certbot"
+            hostname: certbot
+            environment:
+                - EMAIL_ADMIN=<MAIL-UTENTE>
+                - KEY_ID=<KEY-ID-VALUE>
+                - HMAC_KEY=<HMAC_KEY_VALUE>
+                - SERVER_URL=<ACME-SERVER-URL>
+                - CHECK_FREQ=<CHECK-FREQ>
+                - DOMAINS_LIST=domain1:alias1,alias2;domain2;domain3:alias1
+            volumes:
+                - <YOUR-DESTINATION-FOLDER-ON-VM>:/etc/letsencrypt
+            restart: unless-stopped
+            healthcheck:
+                test: ["CMD-SHELL", "certbot certificates > /dev/null 2>&1"]
+                interval: 1m
+                timeout: 10s
+                retries: 3
+                start_period: 20s
     ```
 
-03. Creare `/opt/idem-certbot/.idemcertbot.env`:
+> [!CAUTION]
+> If you want to use Let's Encrypt, you MUST leave **KEY_ID**, **HMAC_KEY** and **SERVER_URL** variables EMPTY.
 
-    ```bash
-    EMAIL_ADMIN=<MAIL-UTENTE>
-    KEY_ID=<KEY-ID-VALUE>
-    HMAC_KEY=<HMAC_KEY_VALUE>
-    SERVER_URL=<ACME-SERVER-URL>
-
-    #DOMAINS_LIST=domain1:alias1,alias2;domain2;domain3:alias1
-    DOMAINS_LIST=example.com:www.example.com,mail.example.com;test.org;mysite.net:blog.mysite.net
-    ```
-
-04. Avviare il Certbot:
-
-    `sudo docker compose pull && sudo docker compose up -d`
-
-05. Utilizzare i certificati disponibili in `/etc/letsencrypt`.
-
-06. Una volta avviato il container è possibile eliminare il file `idemcertbot.env`.
+2. Run docker compose: `docker compose up -d`

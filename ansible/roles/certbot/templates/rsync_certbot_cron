@@ -7,6 +7,5 @@
 # |  |  |  |  |
 # *  *  *  *  * user-name command to be executed
 
-*/15 * * * *	root	/usr/local/bin/rsync_idem_certbot.sh
+*/15 * * * *	root	/usr/local/bin/rsync_certbot.sh
 # An empty line is required at the end of this file for a valid cron file.
-
