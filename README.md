@@ -17,12 +17,12 @@ It can operate in two modes:
 
 ### Remote usage
 
-- Ansible installed on your node (>2.17.0)
+- [Ansible](https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html) installed on your node (>2.17.0)
 - Community Docker Ansible collection. You can install it by running the following command:
 
         ansible-galaxy collection install community.docker
 
-- Docker installed on the remote machines.
+- [Docker](https://docs.docker.com/engine/install/) installed on the remote machines.
 - An ACME account (required only if using ACME EAB).
 
 ## Environment Variables
