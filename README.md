@@ -20,7 +20,7 @@ It can operate in two modes:
 - Ansible installed on your node (>2.17.0)
 - Community Docker Ansible collection. You can install it by running the following command:
 
-        `ansible-galaxy collection install community.docker`
+        ansible-galaxy collection install community.docker
 
 - Docker installed on the remote machines.
 - An ACME account (required only if using ACME EAB).
