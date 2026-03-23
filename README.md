@@ -22,7 +22,7 @@ It can operate in two modes:
 
         ansible-galaxy collection install community.docker
 
-- [Docker](https://docs.docker.com/engine/install/) installed on the remote machines.
+- [Docker](https://docs.docker.com/engine/install/) installed on the *certbot_nodes* machines.
 - An ACME account (required only if using ACME EAB).
 
 ## Environment Variables
@@ -81,6 +81,9 @@ It can operate in two modes:
 ### Deploy
 
 #### With Ansible
+
+> [!IMPORTANT]
+> **You must have SSH access to all hosts in the inventory, including both certbot_nodes and rsync_targets. To simplify this, use the same user and key pair for all hosts. If you cannot use the same user for all nodes, you will need to adjust the playbook accordingly.**
 
 1. Move inside the `idem-certbot` repository folder.
 
